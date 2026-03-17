@@ -19,7 +19,6 @@
     "nodemailer": "^6.9.1",
     "node-cron": "^3.0.2",
     "@anthropic-ai/sdk": "^0.16.0",
-    "puppeteer": "^21.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",

@@ -5,7 +5,6 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const Anthropic = require('@anthropic-ai/sdk');
-const puppeteer = require('puppeteer');
 const path = require('path');
 
 const app = express();
