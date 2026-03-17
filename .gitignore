@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables (never commit)
+.env
+
+# React build output (Render builds this)
+build/
+
+# Database (stored on Render persistent disk)
+*.db
+rates.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Source files folder (docs only, not needed in repo)
+files/
