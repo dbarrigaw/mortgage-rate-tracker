@@ -88,11 +88,30 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Live Rate Card */}
+      {/* Live Rate Cards */}
       <div className="rate-hero">
-        <div className="rate-main-card">
-          <div className="rate-label">Dream For All Conventional</div>
-          <div className="rate-value">{currentRates?.conventional_purchase?.toFixed(3)}%</div>
+        {/* Dream For All Refinance */}
+        <div className="rate-main-card rate-card-refi">
+          <div className="rate-label">Dream For All Refinance</div>
+          <div className={`rate-value ${currentRates?.conventional_refi <= 5.5 ? 'rate-alert' : currentRates?.conventional_refi <= 5.8 ? 'rate-warning' : ''}`}>
+            {currentRates?.conventional_refi?.toFixed(3)}%
+          </div>
+
+          {currentRates?.conventional_refi <= 5.5 && (
+            <div className="refi-alert-banner">
+              🚨 REFINANCE NOW — Rate below 5.5%!
+            </div>
+          )}
+          {currentRates?.conventional_refi > 5.5 && currentRates?.conventional_refi <= 5.8 && (
+            <div className="refi-warning-banner">
+              ⚠️ Getting close — Rate below 5.8%
+            </div>
+          )}
+          {currentRates?.conventional_refi > 5.8 && currentRates?.conventional_refi <= 6.0 && (
+            <div className="refi-notice-banner">
+              📉 Rate below 6% — worth watching
+            </div>
+          )}
 
           <div className="rate-subinfo">
             <div className={`rate-change ${trendDirection}`}>
@@ -101,45 +120,39 @@ const Dashboard = () => {
               <span>{rateChange > 0 ? '+' : ''}{rateChange.toFixed(3)}%</span>
               <span className="change-label">vs 7 days ago</span>
             </div>
-
             <div className="rate-details-grid">
               <div className="detail-box">
-                <span className="detail-label">Dream For All Refi</span>
-                <span className="detail-value">{currentRates?.conventional_refi?.toFixed(3)}%</span>
+                <span className="detail-label">30-Day Avg (Refi)</span>
+                <span className="detail-value">{stats?.movingAvg30?.toFixed(3)}%</span>
               </div>
               <div className="detail-box">
-                <span className="detail-label">Spread</span>
-                <span className="detail-value">{(currentRates?.conventional_purchase - currentRates?.conventional_refi)?.toFixed(3)}%</span>
+                <span className="detail-label">90-Day Range</span>
+                <span className="detail-value">{stats?.min?.toFixed(3)}% – {stats?.max?.toFixed(3)}%</span>
+              </div>
+            </div>
+          </div>
+          <div className="last-updated">Last updated: {currentRates?.date}</div>
+        </div>
+
+        {/* Dream For All Conventional */}
+        <div className="rate-main-card rate-card-conventional">
+          <div className="rate-label">Dream For All Conventional</div>
+          <div className="rate-value rate-value-secondary">
+            {currentRates?.conventional_purchase?.toFixed(3)}%
+          </div>
+          <div className="rate-subinfo">
+            <div className="rate-details-grid">
+              <div className="detail-box">
+                <span className="detail-label">Conventional LI</span>
+                <span className="detail-value">{currentRates?.fha_rate?.toFixed(3)}%</span>
               </div>
               <div className="detail-box">
                 <span className="detail-label">30-Day Avg</span>
                 <span className="detail-value">{stats?.movingAvg30?.toFixed(3)}%</span>
               </div>
-              <div className="detail-box">
-                <span className="detail-label">90-Day Range</span>
-                <span className="detail-value">{stats?.min?.toFixed(3)}% - {stats?.max?.toFixed(3)}%</span>
-              </div>
-            </div>
-
-            <div className="other-rates">
-              <div className="other-rate-item">
-                <span className="rate-type">Conventional LI</span>
-                <span className="rate-num">{currentRates?.fha_rate?.toFixed(3)}%</span>
-              </div>
-              <div className="other-rate-item">
-                <span className="rate-type">Refi</span>
-                <span className="rate-num">{currentRates?.va_rate?.toFixed(3)}%</span>
-              </div>
-              <div className="other-rate-item">
-                <span className="rate-type">Conventional</span>
-                <span className="rate-num">{currentRates?.jumbo_rate?.toFixed(3)}%</span>
-              </div>
             </div>
           </div>
-
-          <div className="last-updated">
-            Last updated: {currentRates?.date}
-          </div>
+          <div className="last-updated">Last updated: {currentRates?.date}</div>
         </div>
       </div>
 

@@ -194,37 +194,43 @@ async function storeRates(rates) {
 
 async function checkForAlerts(rates) {
   const alerts = [];
+  const refi = rates.conventional_refi;
 
-  const previousRate = await getPreviousRate('conventional_purchase');
-
-  if (previousRate) {
-    const change = rates.conventional_purchase - previousRate;
-
-    if (Math.abs(change) > (parseFloat(process.env.ALERT_VOLATILITY_THRESHOLD) || 0.5)) {
+  // Volatility alert on refi rate
+  const previousRefi = await getPreviousRate('conventional_refi');
+  if (previousRefi && refi) {
+    const change = refi - previousRefi;
+    if (Math.abs(change) > 0.25) {
       alerts.push({
         type: 'VOLATILITY',
-        message: `Major rate movement: ${change > 0 ? '+' : ''}${change.toFixed(3)}% in 24h`,
-        rate_value: rates.conventional_purchase
+        message: `Refi rate moved ${change > 0 ? '+' : ''}${change.toFixed(3)}% in 24h (now ${refi.toFixed(3)}%)`,
+        rate_value: refi
       });
     }
   }
 
-  const thresholdHigh = parseFloat(process.env.ALERT_THRESHOLD_HIGH) || 7.5;
-  const thresholdLow = parseFloat(process.env.ALERT_THRESHOLD_LOW) || 5.5;
-
-  if (rates.conventional_purchase > thresholdHigh) {
+  // 🚨 REFINANCE NOW — below 5.5%
+  if (refi && refi < 5.5) {
     alerts.push({
-      type: 'THRESHOLD',
-      message: `Rate elevated: ${rates.conventional_purchase}% (above ${thresholdHigh}%)`,
-      rate_value: rates.conventional_purchase
+      type: 'REFINANCE_NOW',
+      message: `🚨 REFINANCE NOW — Dream For All Refi rate is ${refi.toFixed(3)}%, below 5.5%! Act immediately.`,
+      rate_value: refi
     });
   }
-
-  if (rates.conventional_purchase < thresholdLow) {
+  // ⚠️ Getting close — below 5.8%
+  else if (refi && refi < 5.8) {
     alerts.push({
-      type: 'THRESHOLD',
-      message: `Rate low: ${rates.conventional_purchase}% (below ${thresholdLow}%)`,
-      rate_value: rates.conventional_purchase
+      type: 'REFI_WATCH',
+      message: `⚠️ Refi rate hit ${refi.toFixed(3)}% — below 5.8%. Start preparing your refinance paperwork.`,
+      rate_value: refi
+    });
+  }
+  // 📉 Watch — below 6%
+  else if (refi && refi < 6.0) {
+    alerts.push({
+      type: 'REFI_NOTICE',
+      message: `📉 Refi rate dropped to ${refi.toFixed(3)}% — now below 6%. Keep watching.`,
+      rate_value: refi
     });
   }
 
@@ -235,7 +241,42 @@ async function checkForAlerts(rates) {
     });
   }
 
+  // Send immediate email for REFINANCE_NOW alerts
+  const urgentAlert = alerts.find(a => a.type === 'REFINANCE_NOW');
+  if (urgentAlert) {
+    await sendUrgentRefiEmail(urgentAlert);
+  }
+
   return alerts;
+}
+
+async function sendUrgentRefiEmail(alert) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_RECIPIENTS) return;
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_RECIPIENTS,
+      subject: '🚨 REFINANCE NOW — Dream For All Rate Below 5.5%!!!',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #e74c3c; color: white; padding: 30px; border-radius: 8px; text-align: center;">
+            <h1 style="margin: 0; font-size: 32px;">🚨 REFINANCE NOW</h1>
+            <p style="font-size: 20px; margin: 10px 0 0 0;">Dream For All Rate: <strong>${alert.rate_value.toFixed(3)}%</strong></p>
+          </div>
+          <div style="padding: 30px; background: #fff3f3; border-radius: 8px; margin-top: 20px;">
+            <p style="font-size: 18px; color: #333;">${alert.message}</p>
+            <p style="font-size: 16px; color: #666; margin-top: 20px;">
+              The Dream For All Refinance rate has dropped below 5.5%. This is your target threshold —
+              contact your lender today to start the refinance process.
+            </p>
+          </div>
+        </div>
+      `
+    });
+    console.log('Urgent refi email sent!');
+  } catch (err) {
+    console.error('Urgent email failed:', err);
+  }
 }
 
 async function getPreviousRate(rateType) {
