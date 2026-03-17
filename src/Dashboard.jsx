@@ -91,7 +91,7 @@ const Dashboard = () => {
       {/* Live Rate Card */}
       <div className="rate-hero">
         <div className="rate-main-card">
-          <div className="rate-label">Conventional Purchase Rate</div>
+          <div className="rate-label">Dream For All Conventional</div>
           <div className="rate-value">{currentRates?.conventional_purchase?.toFixed(3)}%</div>
 
           <div className="rate-subinfo">
@@ -104,7 +104,7 @@ const Dashboard = () => {
 
             <div className="rate-details-grid">
               <div className="detail-box">
-                <span className="detail-label">Refi Rate</span>
+                <span className="detail-label">Dream For All Refi</span>
                 <span className="detail-value">{currentRates?.conventional_refi?.toFixed(3)}%</span>
               </div>
               <div className="detail-box">
@@ -123,15 +123,15 @@ const Dashboard = () => {
 
             <div className="other-rates">
               <div className="other-rate-item">
-                <span className="rate-type">FHA</span>
+                <span className="rate-type">Conventional LI</span>
                 <span className="rate-num">{currentRates?.fha_rate?.toFixed(3)}%</span>
               </div>
               <div className="other-rate-item">
-                <span className="rate-type">VA</span>
+                <span className="rate-type">Refi</span>
                 <span className="rate-num">{currentRates?.va_rate?.toFixed(3)}%</span>
               </div>
               <div className="other-rate-item">
-                <span className="rate-type">Jumbo</span>
+                <span className="rate-type">Conventional</span>
                 <span className="rate-num">{currentRates?.jumbo_rate?.toFixed(3)}%</span>
               </div>
             </div>

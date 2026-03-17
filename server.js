@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@libsql/client');
 const axios = require('axios');
+const https = require('https');
+const cheerio = require('cheerio');
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -110,38 +112,59 @@ async function scrapeRates() {
 
 async function scrapeDreamForAllRates() {
   try {
-    const url = process.env.DREAM_FOR_ALL_URL || 'https://www.dreamforall.com';
+    const url = 'https://www.calhfa.ca.gov/apps/rates/';
+
+    // CalHFA uses a cert not trusted by Node by default — safe to bypass for public read-only data
+    const agent = new https.Agent({ rejectUnauthorized: false });
 
     const response = await axios.get(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      timeout: 10000
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 15000,
+      httpsAgent: agent
     });
 
-    const conventionalPurchase = parseFloat(extractRate(response.data, 'conventional-purchase'));
-    const conventionalRefi = parseFloat(extractRate(response.data, 'conventional-refi'));
+    const $ = cheerio.load(response.data);
 
-    if (isNaN(conventionalPurchase) || isNaN(conventionalRefi)) {
+    let conventionalRate = null;
+    let conventionalLIRate = null;
+    let refiRate = null;
+
+    $('.Row').each((i, row) => {
+      const description = $(row).find('.description').text();
+      const rates = [];
+      $(row).find('.retaila div').each((j, el) => {
+        const match = $(el).text().trim().match(/^(\d+\.\d+)%$/);
+        if (match) rates.push(parseFloat(match[1]));
+      });
+
+      if (description.includes('Dream For All Conventional')) {
+        conventionalRate = rates[0] || null;
+        conventionalLIRate = rates[1] || null;
+      }
+      if (description.includes('Dream For All Refinance')) {
+        refiRate = rates[0] || null;
+      }
+    });
+
+    console.log(`Scraped - Conventional: ${conventionalRate}%, Conventional LI: ${conventionalLIRate}%, Refi: ${refiRate}%`);
+
+    if (!conventionalRate && !refiRate) {
+      console.log('No rates found in page — check selectors');
       return null;
     }
 
     return {
       date: new Date().toISOString().split('T')[0],
-      conventional_purchase: conventionalPurchase,
-      conventional_refi: conventionalRefi,
-      fha_rate: conventionalPurchase + 0.25,
-      va_rate: conventionalPurchase - 0.15,
-      jumbo_rate: conventionalPurchase + 0.5
+      conventional_purchase: conventionalRate,
+      conventional_refi: refiRate,
+      fha_rate: conventionalLIRate,
+      va_rate: refiRate,
+      jumbo_rate: conventionalRate
     };
   } catch (error) {
     console.error('Scraping error:', error.message);
     return null;
   }
-}
-
-function extractRate(html, type) {
-  const regex = /(\d+\.\d{2})%/g;
-  const matches = html.match(regex);
-  return matches ? matches[0] : '0';
 }
 
 function generateMockRates() {
